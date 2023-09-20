@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import {useState,useEffect}  from "react";
 import { Searchbar } from "components/Searchbar/Searchbar";
 import { ImageGallary } from "components/ImageGallary/ImageGallary";
 import { Modal } from "components/Modal/Modal";
@@ -8,83 +8,64 @@ import {fetchPhotos}  from '../../helpers/api';
 import css from "./App.module.css";
 
 
-export class App extends Component {
-  state = {
-    query: null,
-    page: 1,
-    loading: false,
-    error: null,
-    // hits: null,
-    showModal: false,
-    selectedHit: null,
-    loadMore: true,
-    images: [],
-    
-    
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    const { page, query, images } = this.state;
-    console.log('Виконався запит componentDidMount');
-    if (page !== prevState.page || query !== prevState.query) {
-    
-      this.setState({ loading: true });
-      fetchPhotos(query, page)
+export const App = () => {
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedHit, setSelectedHit] = useState(null);
+  const [loadMore, setLoadMore] = useState(true);
+  const [images, setImages] = useState([]);
+  useEffect(() => {
+    if (!query) return;
+    setLoading(true);
+    fetchPhotos(query, page)
         .then((data) => {
-          console.log('data', data);
+          // console.log('data', data);
           const newImages = page === 1 ? data.hits : [...images, ...data.hits];
-          this.setState({
-            images: newImages,
-            loading: false,
-            error: null,
-           loadMore: page+1 < Math.ceil(data.totalHits / 12),
-          });
-    })
+          setImages(newImages);
+          setLoading(false); 
+          setError(null);
+          setLoadMore(page + 1 < Math.ceil(data.totalHits / 12));
+           
+          })
+  
      
         .catch((error) => {
-          this.setState({ error, loading: false, images: [] });
-        });
-
-    }
+        
+            setError(error);
+            setLoading(false);
+            setImages([]);
+          });
       
+
+    }, [query, page]);
+  const handleSetQuery = (query, page = 1) => {
+  setQuery(query);
+  setPage(1);   
+  setImages([]);   
+      }
+ const toggleModal = (selectedHit) => {
+   setShowModal(!showModal);
+   setSelectedHit(selectedHit);
+     
   }
-    
-  handleSetQuery = (query, page = 1) => {
-    console.log('query', query);
-    this.setState({
-      query,
-      page: 1,
-      images: []
-    });
-  }
-  toggleModal = (selectedHit) => {
-    this.setState(state => ({
-      showModal: !state.showModal,
-      selectedHit
-    }));
-  }
-  loadMoreImages = () => {
-  const { page, loading } = this.state;
-    if (loading) {
+ const loadMoreImages = () => {
+  if (loading) {
       return;
     }
     const nextPage = page + 1;
-    this.setState(prevState => ({
-        loading: false,
-        page: nextPage,
-        error: null,
-       
-      }))
-     }
-    render() {
-      const { error, loading, images, showModal, selectedHit,loadMore } = this.state;
-     
-      return (
+   setLoading(false);
+   setPage(nextPage);   
+   setError(null);   
+      }
+   return (
         <div className={css.container}>
-          <Searchbar onSubmit={this.handleSetQuery} />
-          <ImageGallary images={images} openModal={this.toggleModal} />
+          <Searchbar onSubmit={handleSetQuery} />
+          <ImageGallary images={images} openModal={toggleModal} />
         
-          { images.length > 0 && loadMore && <Button action={this.loadMoreImages} />}
+          { images.length > 0 && loadMore && <Button action={loadMoreImages} />}
          
           {loading && (
             <ThreeDots
@@ -103,11 +84,11 @@ export class App extends Component {
             />
           )}
          
-          {showModal && <Modal selectedHit={selectedHit} onClose={this.toggleModal} />}
+          {showModal && <Modal selectedHit={selectedHit} onClose={toggleModal} />}
          
           {error && <p>{error.message}</p>}
         
         </div>
       );
     }
-  }
+  

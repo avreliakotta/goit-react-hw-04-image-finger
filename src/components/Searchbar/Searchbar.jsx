@@ -1,28 +1,26 @@
 
-import React, { Component } from "react";
+import  { useState } from "react";
 import css from './Searchbar.module.css';
 import { FaSistrix } from "react-icons/fa6";
-export class Searchbar extends Component{
-  state={
-    query:""
+export const Searchbar=({onSubmit})=>{
+  
+  const [query,setQuery] = useState("");
+  const  handleChange = (event) => {
+    setQuery(event.currentTarget.value.toLowerCase()); 
   }
-
-    handleChange = (event) => {
-       this.setState({query:event.currentTarget.value.toLowerCase()}) 
-  }
-  handleSubmit = (event) => {
+ const handleSubmit = (event) => {
     event.preventDefault();
-    if (this.state.query.trim() === "") {
+    if (query.trim() === "") {
       alert('Enter the name of search');
       return
     }
-    this.props.onSubmit(this.state.query);
-    this.setState({query:""})
+    onSubmit(query);
+   setQuery("");
   }
-    render() {
+    
         return (
           <header className={css.searchbar}>
-            <form className={css.searchForm} onSubmit={this.handleSubmit}>
+            <form className={css.searchForm} onSubmit={handleSubmit}>
               <button type="submit" className={css.searchFormButton}>
       <span className={css.searchFormButtonLabel} ><FaSistrix/></span>
     </button>
@@ -32,12 +30,11 @@ export class Searchbar extends Component{
       type="text"
       autoComplete="off"
                 autoFocus
-                value={this.state.query}
-                onChange={this.handleChange}
+                value={query}
+                onChange={handleChange}
       placeholder="Search images and photos"
     />
   </form>
 </header>
         )
     }
-}
